@@ -156,6 +156,9 @@ else()
     add_cxx_compiler_flag(-std=c++0x)
   endif()
 
+  # Turn off note about compiler abi change
+  add_cxx_compiler_flag(-Wno-psabi)
+
   # Turn compiler warnings up to 11
   add_cxx_compiler_flag(-Wall)
   add_cxx_compiler_flag(-Wextra)
