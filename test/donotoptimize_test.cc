@@ -4,7 +4,7 @@
 
 namespace {
 #if defined(__GNUC__)
-std::int64_t double_up(const std::int64_t x) __attribute__((const));
+std::int64_t double_up(std::int64_t x) __attribute__((const));
 #endif
 std::int64_t double_up(const std::int64_t x) { return x * 2; }
 }  // namespace
@@ -26,7 +26,9 @@ struct BitRef {
   BitRef(int i, unsigned char& b) : index(i), byte(b) {}
 };
 
-int main(int, char*[]) {
+int main(int argc, char* argv[]) {
+  benchmark::MaybeReenterWithoutASLR(argc, argv);
+
   // this test verifies compilation of DoNotOptimize() for some types
 
   char buffer1[1] = "";
@@ -46,36 +48,22 @@ int main(int, char*[]) {
 
   char buffer1024[1024] = "";
   benchmark::DoNotOptimize(buffer1024);
-  benchmark::DoNotOptimize(&buffer1024[0]);
-
-  const char const_buffer1[1] = "";
-  benchmark::DoNotOptimize(const_buffer1);
-
-  const char const_buffer2[2] = "";
-  benchmark::DoNotOptimize(const_buffer2);
-
-  const char const_buffer3[3] = "";
-  benchmark::DoNotOptimize(const_buffer3);
-
-  const char const_buffer8[8] = "";
-  benchmark::DoNotOptimize(const_buffer8);
-
-  const char const_buffer20[20] = "";
-  benchmark::DoNotOptimize(const_buffer20);
-
-  const char const_buffer1024[1024] = "";
-  benchmark::DoNotOptimize(const_buffer1024);
-  benchmark::DoNotOptimize(&const_buffer1024[0]);
+  char* bptr = &buffer1024[0];
+  benchmark::DoNotOptimize(bptr);
 
   int x = 123;
   benchmark::DoNotOptimize(x);
-  benchmark::DoNotOptimize(&x);
+  int* xp = &x;
+  benchmark::DoNotOptimize(xp);
   benchmark::DoNotOptimize(x += 42);
 
-  benchmark::DoNotOptimize(double_up(x));
+  std::int64_t y = double_up(x);
+  benchmark::DoNotOptimize(y);
 
   // These tests are to e
-  benchmark::DoNotOptimize(BitRef::Make());
   BitRef lval = BitRef::Make();
   benchmark::DoNotOptimize(lval);
+
+  // Check that accept rvalue.
+  benchmark::DoNotOptimize(BitRef::Make());
 }
